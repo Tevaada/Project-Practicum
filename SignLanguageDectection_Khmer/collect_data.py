@@ -8,7 +8,7 @@ Controls:
 import os
 import cv2
 import numpy as np
-from utils import (
+from utilities import (
     DATA_PATH, ACTIONS, NO_SEQUENCES, SEQUENCE_LENGTH,
     mp_holistic, create_folders, mediapipe_detection,
     draw_styled_landmarks, extract_keypoints,
