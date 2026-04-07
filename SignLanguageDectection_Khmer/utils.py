@@ -2,15 +2,16 @@ import os
 import cv2
 import numpy as np
 import mediapipe as mp
+import tensorflow as tf
 from collections import deque
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Input, LSTM, Dense
 
 # ── Settings ───────────────────────────────────────────────────────────────────
 DATA_PATH       = "MP_Data"
-ACTIONS         = np.array(["hello", "thanks"])
+ACTIONS         = np.array(["hello", "thanks", "How are you?"])
 NO_SEQUENCES    = 30
-SEQUENCE_LENGTH = 20
+SEQUENCE_LENGTH = 30          # 30 frames per sequence
 MODEL_PATH      = "action_model.keras"
 THRESHOLD       = 0.60
 SMOOTH_FRAMES   = 5
@@ -19,6 +20,8 @@ SMOOTH_FRAMES   = 5
 KHMER_SPEECH = {
     "hello":  "សួស្តី",
     "thanks": "អរគុណ",
+    "How are you?": "សុខសប្យាយជាទេ",
+    
 }
 
 # ── MediaPipe ──────────────────────────────────────────────────────────────────
@@ -102,7 +105,7 @@ def build_model():
         Dense(len(ACTIONS), activation="softmax"),
     ])
     model.compile(
-        optimizer="Adam",
+        optimizer=tf.keras.optimizers.AdamW(learning_rate=0.001),
         loss="categorical_crossentropy",
         metrics=["categorical_accuracy"],
     )

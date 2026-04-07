@@ -1,11 +1,16 @@
 """
 train_model.py — Train the LSTM sign language model.
+
+Data split : 70% train | 15% validation | 15% test
+Optimizer  : AdamW  lr=0.001
+Epochs     : 300
+Batch size : 8
 """
 import os
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, accuracy_score
-from tensorflow.keras.callbacks import TensorBoard
+from tensorflow.keras.callbacks import TensorBoard, EarlyStopping
 from tensorflow.keras.utils import to_categorical
 from utils import DATA_PATH, ACTIONS, NO_SEQUENCES, SEQUENCE_LENGTH, MODEL_PATH, build_model
 
@@ -30,10 +35,17 @@ X = np.array(sequences)
 y = to_categorical(labels).astype(int)
 print(f"Dataset  X:{X.shape}  y:{y.shape}")
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42, stratify=y
+# ── 70 / 15 / 15 split ────────────────────────────────────────────────────────
+# Step 1: split off 30% as temp (will become val + test)
+X_train, X_temp, y_train, y_temp = train_test_split(
+    X, y, test_size=0.30, random_state=42, stratify=y
 )
-print(f"Train: {len(X_train)}  Test: {len(X_test)}")
+# Step 2: split the 30% temp equally into 15% val and 15% test
+X_val, X_test, y_val, y_test = train_test_split(
+    X_temp, y_temp, test_size=0.50, random_state=42, stratify=y_temp
+)
+
+print(f"Train: {len(X_train)}  Val: {len(X_val)}  Test: {len(X_test)}")
 
 # ── Train ──────────────────────────────────────────────────────────────────────
 model = build_model()
@@ -41,9 +53,13 @@ model.summary()
 
 model.fit(
     X_train, y_train,
-    epochs=200,
+    epochs=300,
     batch_size=8,
-    callbacks=[TensorBoard(log_dir="Logs")],
+    validation_data=(X_val, y_val),
+    callbacks=[
+        TensorBoard(log_dir="Logs"),
+        EarlyStopping(monitor="val_loss", patience=30, restore_best_weights=True),
+    ],
     verbose=1,
 )
 
@@ -51,11 +67,11 @@ model.fit(
 model.save(MODEL_PATH)
 print(f"\nModel saved → {MODEL_PATH}")
 
-# ── Evaluate ───────────────────────────────────────────────────────────────────
+# ── Evaluate on held-out test set ─────────────────────────────────────────────
 yhat  = model.predict(X_test, verbose=0)
-ytrue = np.argmax(y_test, axis=1)
-ypred = np.argmax(yhat,   axis=1)
+ytrue = np.argmax(y_test,  axis=1)
+ypred = np.argmax(yhat,    axis=1)
 
 print("\nConfusion Matrix:")
 print(confusion_matrix(ytrue, ypred))
-print(f"Accuracy: {accuracy_score(ytrue, ypred):.4f}")
+print(f"Test Accuracy: {accuracy_score(ytrue, ypred):.4f}")
