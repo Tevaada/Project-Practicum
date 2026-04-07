@@ -1,5 +1,4 @@
 import os
-import cv2
 import numpy as np
 import mediapipe as mp
 import tensorflow as tf
@@ -9,19 +8,21 @@ from tensorflow.keras.layers import Input, LSTM, Dense
 
 # ── Settings ───────────────────────────────────────────────────────────────────
 DATA_PATH       = "MP_Data"
-ACTIONS         = np.array(["hello", "thanks", "How are you?"])
+ACTIONS         = np.array(["hello", "thanks",])
 NO_SEQUENCES    = 30
-SEQUENCE_LENGTH = 30          # 30 frames per sequence
+SEQUENCE_LENGTH = 30
 MODEL_PATH      = "action_model.keras"
-THRESHOLD       = 0.60
+THRESHOLD       = 0.70
 SMOOTH_FRAMES   = 5
 
-# Khmer translations — keys must match ACTIONS exactly
+ACTION_LABELS = {
+    "hello":       "Hello",
+    "thanks":      "Thanks",
+}
+
 KHMER_SPEECH = {
-    "hello":  "សួស្តី",
-    "thanks": "អរគុណ",
-    "How are you?": "សុខសប្យាយជាទេ",
-    
+    "hello":       "សួស្តី",
+    "thanks":      "អរគុណ",
 }
 
 # ── MediaPipe ──────────────────────────────────────────────────────────────────
@@ -31,6 +32,7 @@ mp_face_mesh = mp.solutions.face_mesh
 
 
 def mediapipe_detection(image, model):
+    import cv2
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     image.flags.writeable = False
     results = model.process(image)
@@ -113,8 +115,6 @@ def build_model():
 
 
 class PredictionSmoother:
-    """Average the last N probability vectors to reduce flickering."""
-
     def __init__(self, size=SMOOTH_FRAMES):
         self._buf = deque(maxlen=size)
 
