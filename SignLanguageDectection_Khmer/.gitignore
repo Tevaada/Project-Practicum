@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+.venv310/
+venv/
+env/
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
+
+# Environment files
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Build files
+build/
+dist/
+
+# ML / model files
+*.h5
+*.keras
+*.ckpt
+*.pt
+*.pth
+*.npy
+*.npz
+
+# OS files
+.DS_Store
+Thumbs.db
